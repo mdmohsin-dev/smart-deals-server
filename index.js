@@ -2,6 +2,8 @@ const express = require("express")
 const cors = require("cors");
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 require("dotenv").config()
+const admin = require("firebase-admin");
+
 
 const port = process.env.PORT || 3000;
 
@@ -9,6 +11,32 @@ const app = express()
 
 app.use(cors())
 app.use(express.json())
+
+
+
+const serviceAccount = require("./smart-deals-firebase-adminsdk.json");
+admin.initializeApp({
+    credential: admin.credential.cert(serviceAccount)
+});
+
+
+const verifyFirebaseToken = async (req, res, next) => {
+    const authorization = req.headers.authorization
+
+    if (!authorization) {
+        return res.status(401).send({ message: "Unauthorized access" })
+    }
+
+    const token = authorization.split(' ')[1]
+
+    try {
+        const userInfo = await admin.auth().verifyIdToken(token)
+        req.token_email = userInfo.email
+        next()
+    } catch {
+        return res.status(401).send({ message: "Unauthorized access" })
+    }
+}
 
 
 const uri = `mongodb+srv://${process.env.DB_User}:${process.env.DB_Pass}@cluster0.b7lw2.mongodb.net/?appName=Cluster0`;
@@ -41,7 +69,7 @@ async function run() {
 
 
         // Product API
-        app.get("/products", async (req, res) => {
+        app.get("/products", verifyFirebaseToken, async (req, res) => {
             const email = req.query.email;
             const query = {}
             if (email) {
@@ -100,14 +128,15 @@ async function run() {
         })
 
 
-
-
-
         // Bids API
-        app.get("/bids", async (req, res) => {
+        app.get("/bids", verifyFirebaseToken, async (req, res) => {
+
             const email = req.query.email;
             const query = {}
             if (email) {
+                if (email !== req.token_email) {
+                    return res.status(403).send({ message: "forbiden access" })
+                }
                 query.buyer_email = email
             }
 
