@@ -14,7 +14,10 @@ app.use(express.json())
 
 
 
-const serviceAccount = require("./smart-deals-firebase-adminsdk.json");
+// index.js
+const decoded = Buffer.from(process.env.FIREBASE_secret_key, "base64").toString("utf8");
+const serviceAccount = JSON.parse(decoded);
+
 admin.initializeApp({
     credential: admin.credential.cert(serviceAccount)
 });
