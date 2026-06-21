@@ -68,11 +68,12 @@ async function run() {
         const productsCollection = db.collection("products")
         const bidsCollection = db.collection("bids")
         const usersCollection = db.collection("users")
+        const reviewsCollection = db.collection('reviews')
 
 
 
         // Product API
-        app.get("/products", verifyFirebaseToken, async (req, res) => {
+        app.get("/products", async (req, res) => {
             const email = req.query.email;
             const query = {}
             if (email) {
@@ -129,6 +130,8 @@ async function run() {
             const result = await productsCollection.updateOne(query, updateDoc)
             res.send(result)
         })
+
+
 
 
         // Bids API
@@ -188,6 +191,16 @@ async function run() {
             const result = await usersCollection.insertOne(newUser)
             res.send(result)
 
+        })
+
+
+
+
+
+        // REVIEWS DATA
+        app.get("/reviews", async (req, res) => {
+            const result = await reviewsCollection.find().toArray()
+            res.send(result)
         })
 
 
