@@ -96,7 +96,7 @@ async function run() {
 
 
         app.get("/latest-products", async (req, res) => {
-            const latestProducts = productsCollection.find().sort({ created_at: -1 }).limit(6)
+            const latestProducts = productsCollection.find().sort({ created_at: -1 }).limit(4)
             const result = await latestProducts.toArray()
             res.send(result)
         })
@@ -151,7 +151,7 @@ async function run() {
             res.send(result)
         })
 
-        app.get("/bids/byProduct/:id", async (req, res) => {
+        app.get("/bids/:id", async (req, res) => {
             const productId = req.params.id
             const query = { product: productId }
             const products = bidsCollection.find(query).sort({ bid_price: 1 })
