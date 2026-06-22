@@ -136,20 +136,31 @@ async function run() {
 
         // Bids API
         app.get("/bids", verifyFirebaseToken, async (req, res) => {
-
             const email = req.query.email;
-            const query = {}
+            const query = {};
+
             if (email) {
                 if (email !== req.token_email) {
-                    return res.status(403).send({ message: "forbiden access" })
+                    return res.status(403).send({ message: "forbiden access" });
                 }
-                query.buyer_email = email
+                query.buyer_email = email;
             }
 
-            const bids = bidsCollection.find(query)
-            const result = await bids.toArray()
-            res.send(result)
-        })
+            const bids = await bidsCollection.find(query).toArray();
+
+            
+            const bidsWithProduct = await Promise.all(
+                bids.map(async (bid) => {
+                    const product = await productsCollection.findOne(
+                        { _id: new ObjectId(bid.product) },
+                        { projection: {seller_name: 1,seller_image:1,title:1 } } 
+                    );
+                    return { ...bid, productDetails: product };
+                })
+            );
+
+            res.send(bidsWithProduct);
+        });
 
         app.get("/bids/:id", async (req, res) => {
             const productId = req.params.id
